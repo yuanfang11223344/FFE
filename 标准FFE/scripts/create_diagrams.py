@@ -197,7 +197,8 @@ def main() -> None:
     drawio = locate_drawio()
     names = ["ffe_architecture.svg", "rtl_cycle.svg", "python_functions.svg", "system_overview.svg"]
     for index, name in enumerate(names, start=1):
-        subprocess.run([drawio, "--export", "--format", "svg", "--page-index", str(index), "--output", str(DOCS / name), str(source)], check=True)
+        subprocess.run([drawio, "--export", "--format", "svg", "--embed-svg-fonts", "false",
+                        "--page-index", str(index), "--output", str(DOCS / name), str(source)], check=True)
     print(f"已生成 {source.relative_to(ROOT)} 和 {len(names)} 张 draw.io SVG 图。")
 
 
