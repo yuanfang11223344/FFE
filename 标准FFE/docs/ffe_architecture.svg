@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 450" role="img" aria-labelledby="title desc">
+  <title id="title">五抽头直接型前馈均衡器</title>
+  <desc id="desc">输入和四级样本延迟分别馈入五个系数乘法器，乘积相加后进行定点缩放、饱和和寄存。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#425466"/></marker>
+    <style>
+      .bg{fill:#f7fafc}.delay{fill:#e8f2fb;stroke:#2672a5;stroke-width:2;rx:10}.mul{fill:#fff4df;stroke:#b56b12;stroke-width:2;rx:10}.sum{fill:#f3ecff;stroke:#7751a3;stroke-width:2;rx:10}.out{fill:#e7f6eb;stroke:#258247;stroke-width:2;rx:10}.wire{fill:none;stroke:#425466;stroke-width:2;marker-end:url(#arrow)}.tap{fill:none;stroke:#728394;stroke-width:1.5;marker-end:url(#arrow)}text{font-family:system-ui,-apple-system,sans-serif;fill:#18232d;font-size:16px}.small{font-size:13px;fill:#425466}.head{font-size:21px;font-weight:650}
+    </style>
+  </defs>
+  <rect class="bg" width="1400" height="450" rx="14"/>
+  <text class="head" x="30" y="38">5-tap direct-form FFE · c0 multiplies the newest accepted sample</text>
+  <text x="25" y="153">x[n]</text>
+  <path class="wire" d="M75 148H140"/>
+  <rect class="delay" x="140" y="118" width="115" height="60"/><text x="163" y="145">D1 · z⁻¹</text><text class="small" x="155" y="165">previous valid x</text>
+  <path class="wire" d="M255 148H300"/>
+  <rect class="delay" x="300" y="118" width="115" height="60"/><text x="323" y="145">D2 · z⁻¹</text><text class="small" x="315" y="165">2 samples back</text>
+  <path class="wire" d="M415 148H460"/>
+  <rect class="delay" x="460" y="118" width="115" height="60"/><text x="483" y="145">D3 · z⁻¹</text><text class="small" x="475" y="165">3 samples back</text>
+  <path class="wire" d="M575 148H620"/>
+  <rect class="delay" x="620" y="118" width="115" height="60"/><text x="643" y="145">D4 · z⁻¹</text><text class="small" x="635" y="165">4 samples back</text>
+  <path class="wire" d="M75 148V218H780"/><path class="wire" d="M255 148V218H780"/><path class="wire" d="M415 148V218H780"/><path class="wire" d="M575 148V218H780"/><path class="wire" d="M735 148V218H780"/>
+  <path class="tap" d="M75 218V272"/><path class="tap" d="M255 218V272"/><path class="tap" d="M415 218V272"/><path class="tap" d="M575 218V272"/><path class="tap" d="M735 218V272"/>
+  <rect class="mul" x="25" y="272" width="100" height="52"/><text x="43" y="303">× C0 (−4)</text>
+  <rect class="mul" x="205" y="272" width="100" height="52"/><text x="223" y="303">× C1 (−12)</text>
+  <rect class="mul" x="365" y="272" width="100" height="52"/><text x="383" y="303">× C2 (64)</text>
+  <rect class="mul" x="525" y="272" width="100" height="52"/><text x="543" y="303">× C3 (−16)</text>
+  <rect class="mul" x="685" y="272" width="100" height="52"/><text x="703" y="303">× C4 (4)</text>
+  <path class="tap" d="M125 298H825V154H860"/><path class="tap" d="M305 298H825V164H860"/><path class="tap" d="M465 298H825V174H860"/><path class="tap" d="M625 298H825V184H860"/><path class="tap" d="M785 298H825V194H860"/>
+  <rect class="sum" x="860" y="132" width="145" height="88"/><text x="885" y="166">Σ 5 products</text><text class="small" x="880" y="191">signed 19-bit acc</text>
+  <path class="wire" d="M1005 176H1040"/>
+  <rect class="mul" x="1040" y="132" width="125" height="88"/><text x="1054" y="166">arithmetic</text><text x="1060" y="190">shift right 6</text>
+  <path class="wire" d="M1165 176H1200"/>
+  <rect class="mul" x="1200" y="132" width="92" height="88"/><text x="1216" y="166">saturate</text><text class="small" x="1215" y="190">signed 8-bit</text>
+  <path class="wire" d="M1292 176H1320"/>
+  <rect class="out" x="1320" y="145" width="70" height="62"/><text x="1335" y="173">y_out</text><text class="small" x="1332" y="193">register</text>
+  <text class="small" x="30" y="390">All D registers advance only on in_valid=1. An invalid cycle holds sample history and output.</text>
+  <text class="small" x="30" y="414">Coefficient scale is Q2.6; the output register captures the calculated result on the accepting clock edge.</text>
+</svg>
