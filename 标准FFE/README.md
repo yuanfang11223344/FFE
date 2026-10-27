@@ -18,8 +18,8 @@ yosys -Q -T -p 'read_verilog -sv rtl/ffe.sv; synth -top ffe; stat' > build/yosys
 
 下面四张图来自同一个可编辑的 [draw.io 多页文件](docs/ffe_design.drawio)，图中的模块和关系对照了当前 Python 与 RTL 源码：
 
-1. [RTL 总体数据通路](docs/ffe_architecture.svg)：五抽头延迟线、乘积汇集、累加、定点缩放、饱和与输出寄存器。
-2. [RTL 每拍处理顺序](docs/rtl_cycle.svg)：沿前组合计算、有效沿更新、气泡保持及异步复位。
+1. [RTL 总体数据通路](docs/ffe_architecture.svg)：明确标出 D0=x_in、D1=d1 到 D4=d4，各抽头的历史位置及乘加数据通路。
+2. [RTL 每拍处理顺序](docs/rtl_cycle.svg)：沿前组合计算、D0→D1→…→D4 的有效沿推进、气泡保持及异步复位。
 3. [Python 函数职责](docs/python_functions.svg)：列出模型、回归编排和教学信道脚本中的主要函数及职责。
 4. [软硬件整体系统图](docs/system_overview.svg)：展示参考模型怎样生成向量、testbench 怎样驱动 RTL、如何逐拍比对并导出波形。
 

@@ -75,17 +75,18 @@ class Page:
 def rtl_datapath() -> Page:
     p = Page("RTL 总体框图", 2180, 820, "直接型 5-tap FIR：组合乘加与量化在输入路径上；历史样本和输出只在有效上升沿更新。")
     control = p.card("控制", "控制：clk / rst_n / in_valid\n异步复位清空历史和输出；in_valid 控制状态推进", 40, 125, 2080, 72, "gray")
-    xin = p.card("当前样本", "x_in\n当前样本", 45, 280, 150, 84, "blue")
+    xin = p.card("当前样本", "D0 / x_in\n当前输入样本\n0 个历史延迟", 45, 280, 170, 92, "blue")
     regs = []
     for i, label in enumerate(("d1", "d2", "d3", "d4")):
-        regs.append(p.card(label, f"{label} 寄存器\n最近第 {i+1} 个历史有效样本", 285 + i * 215, 260, 165, 88, "teal"))
+        delay = i + 1
+        regs.append(p.card(f"D{delay}", f"D{delay} / {label}\n{delay} 个有效样本延迟\nx[n-{delay}]", 285 + i * 215, 260, 165, 92, "teal"))
     p.edge(xin, regs[0])
     for a, b in zip(regs, regs[1:]):
         p.edge(a, b)
 
     mults = []
     for i, (label, x) in enumerate(zip(("x_in", "d1", "d2", "d3", "d4"), (55, 270, 485, 700, 915))):
-        m = p.card(f"乘法器 {i}", f"抽头 {i}\n{label} × C{i}\nC{i} = ({(-4, -12, 64, -16, 4)[i]})", x, 465, 175, 102, "orange")
+        m = p.card(f"乘法器 {i}", f"Tap {i} / D{i}\n{label} × C{i}\nC{i} = ({(-4, -12, 64, -16, 4)[i]})", x, 465, 175, 102, "orange")
         mults.append(m)
     p.edge(xin, mults[0], "tap 0")
     for i in range(4):
@@ -103,23 +104,30 @@ def rtl_datapath() -> Page:
     p.edge(add, shift)
     p.edge(shift, sat)
     p.edge(sat, yreg)
-    p.card("时序提示", "一个有效上升沿同时：\n① y_out 锁存由沿前 x_in、d1..d4 算出的结果；② d1..d4 前移；③ out_valid <= in_valid。\n气泡时历史与 y_out 保持，out_valid 拉低。", 45, 720, 2075, 78, "gray")
+    p.card("延迟级与时序提示", "D0=x_in（当前样本）；D1=d1 到 D4=d4（从新到旧的历史样本），不是乘法器内部流水级。\n一个有效上升沿：y_out 锁存沿前 D0..D4 的计算结果，同时 D0→D1→D2→D3→D4 推进；气泡时 D1..D4 与 y_out 保持，out_valid 拉低。", 45, 720, 2075, 78, "gray")
     return p
 
 
 def rtl_cycle() -> Page:
-    p = Page("RTL 每拍处理", 1760, 900, "要点：乘加不是多拍流水。输入在上升沿被接收，输出在同一上升沿之后更新；持续有效时每拍一个样本。")
-    before = p.card("沿前组合路径", "本周期稳定的 x_in 与 d1..d4\n→ 5 个常数乘法\n→ 19 位累加 acc\n→ 算术右移 6 位\n→ 饱和器得到 quantized", 70, 165, 455, 250, "blue")
-    edge = p.card("采样时刻", "posedge clk\n检查 rst_n\n\n若 rst_n=0：异步清零状态\n否则：out_valid <= in_valid", 645, 190, 400, 200, "purple")
-    decision = p.card("有效？", "in_valid == 1", 800, 455, 220, 110, "orange")
-    accepted = p.card("有效样本", "同一个上升沿：\ny_out <= quantized\nd1 <= x_in\nd2 <= 旧 d1\nd3 <= 旧 d2\nd4 <= 旧 d3\nout_valid = 1", 1190, 170, 450, 265, "teal")
-    bubble = p.card("气泡周期", "同一个上升沿：\n历史寄存器保持\ny_out 保持\nout_valid = 0\n组合 acc 仍可随输入变化", 1190, 520, 450, 230, "gray")
+    p = Page("RTL 每拍处理", 1760, 1010, "乘加不是多拍流水：本周期输入在上升沿被接收，输出在同一上升沿之后更新；持续有效时每拍一个样本。")
+    stages = []
+    stage_labels = ["D0 / x_in\n当前输入样本", "D1 / d1\n最近的历史样本", "D2 / d2\n更早一个样本", "D3 / d3\n再早一个样本", "D4 / d4\n最早的历史样本"]
+    for i, label in enumerate(stage_labels):
+        stages.append(p.card(f"延迟级 D{i}", label, 40 + i * 335, 120, 285, 82, "blue" if i == 0 else "teal"))
+    for left, right in zip(stages, stages[1:]):
+        p.edge(left, right)
+    p.card("延迟级说明", "每个 in_valid=1 的上升沿，样本从 D0 推进到 D1，旧 D1 推进到 D2，依此到 D4；in_valid=0 的气泡不推进。D0..D4 表示 FFE 抽头延迟，不是乘法器流水级。", 40, 215, 1675, 58, "gray")
+    before = p.card("沿前组合路径", "本周期稳定的 D0..D4\n→ 5 个常数乘法\n→ 19 位累加 acc\n→ 算术右移 6 位\n→ 饱和器得到 quantized", 70, 310, 455, 250, "blue")
+    edge = p.card("采样时刻", "posedge clk\n检查 rst_n\n\n若 rst_n=0：异步清零状态\n否则：out_valid <= in_valid", 645, 335, 400, 200, "purple")
+    decision = p.card("有效？", "in_valid == 1", 800, 600, 220, 110, "orange")
+    accepted = p.card("有效样本", "同一个上升沿：\ny_out <= quantized\nD1 <= D0\nD2 <= 旧 D1\nD3 <= 旧 D2\nD4 <= 旧 D3\nout_valid = 1", 1190, 315, 450, 285, "teal")
+    bubble = p.card("气泡周期", "同一个上升沿：\nD1..D4 历史寄存器保持\ny_out 保持\nout_valid = 0\n组合 acc 仍可随输入变化", 1190, 665, 450, 230, "gray")
     p.edge(before, edge, "quantized 在沿前就绪")
     p.edge(edge, decision, "时钟沿")
     p.edge(decision, accepted, "是")
     p.edge(decision, bubble, "否")
-    p.card("复位", "rst_n 为低时不等待时钟：立即清零 d1..d4、y_out、out_valid。释放复位后，历史零值等价于有效输入序列前补零。", 70, 600, 970, 150, "red")
-    p.card("时序与吞吐", "接受输入的时钟沿后输出寄存器立即更新（不额外等待一个完整周期）；out_valid 与该结果对齐。无 ready/反压端口；in_valid=0 是暂停状态更新的气泡。", 70, 785, 1570, 72, "blue")
+    p.card("复位", "rst_n 为低时不等待时钟：立即清零 D1..D4、y_out、out_valid。释放复位后，历史零值等价于有效输入序列前补零。", 70, 745, 970, 150, "red")
+    p.card("时序与吞吐", "接受输入的时钟沿后输出寄存器立即更新（不额外等待一个完整周期）；out_valid 与该结果对齐。无 ready/反压端口；in_valid=0 是暂停状态更新的气泡。", 70, 925, 1570, 72, "blue")
     return p
 
 
