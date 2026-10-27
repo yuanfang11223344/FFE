@@ -127,20 +127,20 @@
         <mxCell id="2" value="RTL 每拍处理" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=PingFang SC;fontSize=26;fontStyle=1;fontColor=#18324A;" vertex="1" parent="1">
           <mxGeometry x="35" y="18" width="1690" height="44" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="颜色按时钟拍分组：同一行同色的状态、组合运算和时钟沿更新属于同一拍；下一拍换色。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=PingFang SC;fontSize=15;fontColor=#52616F;" vertex="1" parent="1">
+        <mxCell id="3" value="本页只展开连续两拍作示例，不代表系统总延迟两拍；后续每个有效上升沿都重复同一流程。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=PingFang SC;fontSize=15;fontColor=#52616F;" vertex="1" parent="1">
           <mxGeometry x="40" y="65" width="1680" height="38" as="geometry" />
         </mxCell>
-        <mxCell id="4" value="每个颜色代表一整拍，包含“本拍开始状态 → 沿前组合计算 → 本拍上升沿更新”。D0..D4 是样本延迟位置，不是运算要经过的多拍流水级。" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#F1F3F5;strokeColor=#77818B;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="40" y="115" width="1675" height="58" as="geometry" />
+        <mxCell id="4" value="每个颜色代表一整拍：本拍状态 → 沿前组合计算 → 本拍上升沿更新。这里只画第 n、n+1 两拍，说明延迟线如何推进；持续有效时后续每拍仍接受一个样本。D0..D4 是抽头历史位置，不是多拍运算流水级。" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#F1F3F5;strokeColor=#77818B;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="115" width="1675" height="72" as="geometry" />
         </mxCell>
         <mxCell id="5" value="in_valid = 1&#10;D0 = x[n]&#10;D1 = x[n−1]&#10;D2 = x[n−2]&#10;D3 = x[n−3]&#10;D4 = x[n−4]" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#E8F1FB;strokeColor=#4C78A8;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="45" y="200" width="430" height="230" as="geometry" />
+          <mxGeometry x="45" y="215" width="430" height="230" as="geometry" />
         </mxCell>
         <mxCell id="6" value="p0..p4 = C0..C4 × D0..D4&#10;acc[n] = p0 + p1 + p2 + p3 + p4&#10;quantized[n] = sat(acc[n] &gt;&gt;&gt; 6)&#10;这些值在上升沿前稳定" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#E8F1FB;strokeColor=#4C78A8;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="560" y="200" width="510" height="230" as="geometry" />
+          <mxGeometry x="560" y="215" width="510" height="230" as="geometry" />
         </mxCell>
         <mxCell id="7" value="posedge clk：&#10;y_out &lt;= quantized[n]&#10;out_valid &lt;= 1&#10;D1 &lt;= D0；D2 &lt;= 旧 D1&#10;D3 &lt;= 旧 D2；D4 &lt;= 旧 D3&#10;本沿输出和历史同时更新" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#E8F1FB;strokeColor=#4C78A8;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="1155" y="200" width="540" height="230" as="geometry" />
+          <mxGeometry x="1155" y="215" width="540" height="230" as="geometry" />
         </mxCell>
         <mxCell id="8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4C78A8;strokeWidth=2;endArrow=block;endFill=1;fontFamily=PingFang SC;fontSize=13;fontColor=#37474F;" edge="1" parent="1" source="5" target="6">
           <mxGeometry relative="1" as="geometry" />
@@ -149,13 +149,13 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="10" value="in_valid = 1&#10;D0 = x[n+1]&#10;D1 = x[n]&#10;D2 = x[n−1]&#10;D3 = x[n−2]&#10;D4 = x[n−3]" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#FFF1DF;strokeColor=#D68A24;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="45" y="485" width="430" height="230" as="geometry" />
+          <mxGeometry x="45" y="490" width="430" height="230" as="geometry" />
         </mxCell>
         <mxCell id="11" value="用新的 D0..D4&#10;执行相同的五路乘法、累加、&#10;算术右移和饱和&#10;得到 quantized[n+1]" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#FFF1DF;strokeColor=#D68A24;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="560" y="485" width="510" height="230" as="geometry" />
+          <mxGeometry x="560" y="490" width="510" height="230" as="geometry" />
         </mxCell>
         <mxCell id="12" value="posedge clk：&#10;y_out &lt;= quantized[n+1]&#10;out_valid &lt;= 1&#10;D1..D4 再向历史方向推进一格&#10;持续有效时每拍接受一个样本" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#FFF1DF;strokeColor=#D68A24;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
-          <mxGeometry x="1155" y="485" width="540" height="230" as="geometry" />
+          <mxGeometry x="1155" y="490" width="540" height="230" as="geometry" />
         </mxCell>
         <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D68A24;strokeWidth=2;endArrow=block;endFill=1;fontFamily=PingFang SC;fontSize=13;fontColor=#37474F;" edge="1" parent="1" source="10" target="11">
           <mxGeometry relative="1" as="geometry" />
@@ -166,7 +166,7 @@
         <mxCell id="15" value="若某拍 in_valid=0：out_valid 拉低；D1..D4 与 y_out 保持；组合 acc 仍会随 x_in 变化。该拍不消费新样本，后续有效样本仍按有效样本顺序推进。" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#F1F3F5;strokeColor=#77818B;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
           <mxGeometry x="45" y="770" width="795" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="16" value="rst_n 拉低时立即清零 D1..D4、y_out、out_valid。有效样本在其采样上升沿后得到对应输出，持续有效时吞吐为每拍一个样本；没有额外的 MAC 流水等待。" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#FDECEC;strokeColor=#C65A5A;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
+        <mxCell id="16" value="rst_n 拉低时立即清零 D1..D4、y_out、out_valid。每个有效输入在采样上升沿后得到对应输出；持续有效时每拍一个样本。这里的 D1..D4 是 FFE 抽头历史，不表示输出要等四拍。" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;shadow=0;fillColor=#FDECEC;strokeColor=#C65A5A;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontColor=#203040;align=center;verticalAlign=middle;spacing=10;" vertex="1" parent="1">
           <mxGeometry x="885" y="770" width="810" height="130" as="geometry" />
         </mxCell>
       </root>

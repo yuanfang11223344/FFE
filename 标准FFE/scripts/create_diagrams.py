@@ -109,22 +109,22 @@ def rtl_datapath() -> Page:
 
 
 def rtl_cycle() -> Page:
-    p = Page("RTL 每拍处理", 1760, 1010, "颜色按时钟拍分组：同一行同色的状态、组合运算和时钟沿更新属于同一拍；下一拍换色。")
-    p.card("颜色约定", "每个颜色代表一整拍，包含“本拍开始状态 → 沿前组合计算 → 本拍上升沿更新”。D0..D4 是样本延迟位置，不是运算要经过的多拍流水级。", 40, 115, 1675, 58, "gray")
+    p = Page("RTL 每拍处理", 1760, 1010, "本页只展开连续两拍作示例，不代表系统总延迟两拍；后续每个有效上升沿都重复同一流程。")
+    p.card("颜色约定与拍数说明", "每个颜色代表一整拍：本拍状态 → 沿前组合计算 → 本拍上升沿更新。这里只画第 n、n+1 两拍，说明延迟线如何推进；持续有效时后续每拍仍接受一个样本。D0..D4 是抽头历史位置，不是多拍运算流水级。", 40, 115, 1675, 72, "gray")
 
-    n_state = p.card("第 n 拍：开始状态", "in_valid = 1\nD0 = x[n]\nD1 = x[n−1]\nD2 = x[n−2]\nD3 = x[n−3]\nD4 = x[n−4]", 45, 200, 430, 230, "blue")
-    n_calc = p.card("第 n 拍：组合计算", "p0..p4 = C0..C4 × D0..D4\nacc[n] = p0 + p1 + p2 + p3 + p4\nquantized[n] = sat(acc[n] >>> 6)\n这些值在上升沿前稳定", 560, 200, 510, 230, "blue")
-    n_edge = p.card("第 n 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n]\nout_valid <= 1\nD1 <= D0；D2 <= 旧 D1\nD3 <= 旧 D2；D4 <= 旧 D3\n本沿输出和历史同时更新", 1155, 200, 540, 230, "blue")
+    n_state = p.card("第 n 拍：开始状态", "in_valid = 1\nD0 = x[n]\nD1 = x[n−1]\nD2 = x[n−2]\nD3 = x[n−3]\nD4 = x[n−4]", 45, 215, 430, 230, "blue")
+    n_calc = p.card("第 n 拍：组合计算", "p0..p4 = C0..C4 × D0..D4\nacc[n] = p0 + p1 + p2 + p3 + p4\nquantized[n] = sat(acc[n] >>> 6)\n这些值在上升沿前稳定", 560, 215, 510, 230, "blue")
+    n_edge = p.card("第 n 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n]\nout_valid <= 1\nD1 <= D0；D2 <= 旧 D1\nD3 <= 旧 D2；D4 <= 旧 D3\n本沿输出和历史同时更新", 1155, 215, 540, 230, "blue")
     p.edge(n_state, n_calc, color="#4C78A8")
     p.edge(n_calc, n_edge, color="#4C78A8")
 
-    next_state = p.card("第 n+1 拍：开始状态", "in_valid = 1\nD0 = x[n+1]\nD1 = x[n]\nD2 = x[n−1]\nD3 = x[n−2]\nD4 = x[n−3]", 45, 485, 430, 230, "orange")
-    next_calc = p.card("第 n+1 拍：组合计算", "用新的 D0..D4\n执行相同的五路乘法、累加、\n算术右移和饱和\n得到 quantized[n+1]", 560, 485, 510, 230, "orange")
-    next_edge = p.card("第 n+1 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n+1]\nout_valid <= 1\nD1..D4 再向历史方向推进一格\n持续有效时每拍接受一个样本", 1155, 485, 540, 230, "orange")
+    next_state = p.card("第 n+1 拍：开始状态", "in_valid = 1\nD0 = x[n+1]\nD1 = x[n]\nD2 = x[n−1]\nD3 = x[n−2]\nD4 = x[n−3]", 45, 490, 430, 230, "orange")
+    next_calc = p.card("第 n+1 拍：组合计算", "用新的 D0..D4\n执行相同的五路乘法、累加、\n算术右移和饱和\n得到 quantized[n+1]", 560, 490, 510, 230, "orange")
+    next_edge = p.card("第 n+1 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n+1]\nout_valid <= 1\nD1..D4 再向历史方向推进一格\n持续有效时每拍接受一个样本", 1155, 490, 540, 230, "orange")
     p.edge(next_state, next_calc, color="#D68A24")
     p.edge(next_calc, next_edge, color="#D68A24")
     p.card("气泡周期", "若某拍 in_valid=0：out_valid 拉低；D1..D4 与 y_out 保持；组合 acc 仍会随 x_in 变化。该拍不消费新样本，后续有效样本仍按有效样本顺序推进。", 45, 770, 795, 130, "gray")
-    p.card("异步复位 / 延迟与吞吐", "rst_n 拉低时立即清零 D1..D4、y_out、out_valid。有效样本在其采样上升沿后得到对应输出，持续有效时吞吐为每拍一个样本；没有额外的 MAC 流水等待。", 885, 770, 810, 130, "red")
+    p.card("异步复位 / 延迟与吞吐", "rst_n 拉低时立即清零 D1..D4、y_out、out_valid。每个有效输入在采样上升沿后得到对应输出；持续有效时每拍一个样本。这里的 D1..D4 是 FFE 抽头历史，不表示输出要等四拍。", 885, 770, 810, 130, "red")
     return p
 
 
