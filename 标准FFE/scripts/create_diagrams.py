@@ -74,32 +74,32 @@ class Page:
 
 def rtl_datapath() -> Page:
     p = Page("RTL 总体框图", 2180, 820, "直接型 5-tap FIR：组合乘加与量化在输入路径上；历史样本和输出只在有效上升沿更新。")
-    control = p.card("控制", "控制：clk / rst_n / in_valid\n异步复位清空历史和输出；in_valid 控制状态推进", 40, 125, 2080, 72, "gray")
+    control = p.card("同一拍：完整 FFE 操作", "控制：clk / rst_n / in_valid\n本图所有蓝色模块合起来表示同一拍：沿前组合计算 + 有效上升沿锁存结果/推进延迟线。", 40, 125, 2080, 72, "blue")
     xin = p.card("当前样本", "D0 / x_in\n当前输入样本\n0 个历史延迟", 45, 280, 170, 92, "blue")
     regs = []
     for i, label in enumerate(("d1", "d2", "d3", "d4")):
         delay = i + 1
-        regs.append(p.card(f"D{delay}", f"D{delay} / {label}\n{delay} 个有效样本延迟\nx[n-{delay}]", 285 + i * 215, 260, 165, 92, "teal"))
+        regs.append(p.card(f"D{delay}", f"D{delay} / {label}\n{delay} 个有效样本延迟\nx[n-{delay}]", 285 + i * 215, 260, 165, 92, "blue"))
     p.edge(xin, regs[0])
     for a, b in zip(regs, regs[1:]):
         p.edge(a, b)
 
     mults = []
     for i, (label, x) in enumerate(zip(("x_in", "d1", "d2", "d3", "d4"), (55, 270, 485, 700, 915))):
-        m = p.card(f"乘法器 {i}", f"Tap {i} / D{i}\n{label} × C{i}\nC{i} = ({(-4, -12, 64, -16, 4)[i]})", x, 465, 175, 102, "orange")
+        m = p.card(f"乘法器 {i}", f"Tap {i} / D{i}\n{label} × C{i}\nC{i} = ({(-4, -12, 64, -16, 4)[i]})", x, 465, 175, 102, "blue")
         mults.append(m)
     p.edge(xin, mults[0], "tap 0")
     for i in range(4):
         p.edge(regs[i], mults[i+1], f"tap {i+1}")
 
-    products = p.card("乘积总线", "5 路独立乘积 p0..p4\n各路保留完整 16 位 signed 结果", 55, 620, 1035, 76, "purple")
+    products = p.card("乘积总线", "5 路独立乘积 p0..p4\n各路保留完整 16 位 signed 结果", 55, 620, 1035, 76, "blue")
     for i, m in enumerate(mults):
         center = 142.5 + i * 215
         p.edge(m, products, f"p{i}", entry_x=(center - 55) / 1035)
-    add = p.card("加法树", "符号扩展至 19 位\n五路求和得到 acc", 1150, 450, 190, 130, "purple")
+    add = p.card("加法树", "符号扩展至 19 位\n五路求和得到 acc", 1150, 450, 190, 130, "blue")
     shift = p.card("定点缩放", "算术右移 FRAC=6\n负数保留符号\nshifted", 1375, 465, 190, 100, "blue")
-    sat = p.card("饱和器", "限制至 signed 8-bit\n[-128, 127]\nquantized", 1615, 465, 190, 100, "red")
-    yreg = p.card("输出寄存器", "posedge clk 且 in_valid=1\n锁存 quantized\ny_out / out_valid", 1860, 450, 260, 130, "teal")
+    sat = p.card("饱和器", "限制至 signed 8-bit\n[-128, 127]\nquantized", 1615, 465, 190, 100, "blue")
+    yreg = p.card("输出寄存器", "posedge clk 且 in_valid=1\n锁存 quantized\ny_out / out_valid", 1860, 450, 260, 130, "blue")
     p.edge(products, add, "p0..p4")
     p.edge(add, shift)
     p.edge(shift, sat)
@@ -109,25 +109,22 @@ def rtl_datapath() -> Page:
 
 
 def rtl_cycle() -> Page:
-    p = Page("RTL 每拍处理", 1760, 1010, "乘加不是多拍流水：本周期输入在上升沿被接收，输出在同一上升沿之后更新；持续有效时每拍一个样本。")
-    stages = []
-    stage_labels = ["D0 / x_in\n当前输入样本", "D1 / d1\n最近的历史样本", "D2 / d2\n更早一个样本", "D3 / d3\n再早一个样本", "D4 / d4\n最早的历史样本"]
-    for i, label in enumerate(stage_labels):
-        stages.append(p.card(f"延迟级 D{i}", label, 40 + i * 335, 120, 285, 82, "blue" if i == 0 else "teal"))
-    for left, right in zip(stages, stages[1:]):
-        p.edge(left, right)
-    p.card("延迟级说明", "每个 in_valid=1 的上升沿，样本从 D0 推进到 D1，旧 D1 推进到 D2，依此到 D4；in_valid=0 的气泡不推进。D0..D4 表示 FFE 抽头延迟，不是乘法器流水级。", 40, 215, 1675, 58, "gray")
-    before = p.card("沿前组合路径", "本周期稳定的 D0..D4\n→ 5 个常数乘法\n→ 19 位累加 acc\n→ 算术右移 6 位\n→ 饱和器得到 quantized", 70, 310, 455, 250, "blue")
-    edge = p.card("采样时刻", "posedge clk\n检查 rst_n\n\n若 rst_n=0：异步清零状态\n否则：out_valid <= in_valid", 645, 335, 400, 200, "purple")
-    decision = p.card("有效？", "in_valid == 1", 800, 600, 220, 110, "orange")
-    accepted = p.card("有效样本", "同一个上升沿：\ny_out <= quantized\nD1 <= D0\nD2 <= 旧 D1\nD3 <= 旧 D2\nD4 <= 旧 D3\nout_valid = 1", 1190, 315, 450, 285, "teal")
-    bubble = p.card("气泡周期", "同一个上升沿：\nD1..D4 历史寄存器保持\ny_out 保持\nout_valid = 0\n组合 acc 仍可随输入变化", 1190, 665, 450, 230, "gray")
-    p.edge(before, edge, "quantized 在沿前就绪")
-    p.edge(edge, decision, "时钟沿")
-    p.edge(decision, accepted, "是")
-    p.edge(decision, bubble, "否")
-    p.card("复位", "rst_n 为低时不等待时钟：立即清零 D1..D4、y_out、out_valid。释放复位后，历史零值等价于有效输入序列前补零。", 70, 745, 970, 150, "red")
-    p.card("时序与吞吐", "接受输入的时钟沿后输出寄存器立即更新（不额外等待一个完整周期）；out_valid 与该结果对齐。无 ready/反压端口；in_valid=0 是暂停状态更新的气泡。", 70, 925, 1570, 72, "blue")
+    p = Page("RTL 每拍处理", 1760, 1010, "颜色按时钟拍分组：同一行同色的状态、组合运算和时钟沿更新属于同一拍；下一拍换色。")
+    p.card("颜色约定", "每个颜色代表一整拍，包含“本拍开始状态 → 沿前组合计算 → 本拍上升沿更新”。D0..D4 是样本延迟位置，不是运算要经过的多拍流水级。", 40, 115, 1675, 58, "gray")
+
+    n_state = p.card("第 n 拍：开始状态", "in_valid = 1\nD0 = x[n]\nD1 = x[n−1]\nD2 = x[n−2]\nD3 = x[n−3]\nD4 = x[n−4]", 45, 200, 430, 230, "blue")
+    n_calc = p.card("第 n 拍：组合计算", "p0..p4 = C0..C4 × D0..D4\nacc[n] = p0 + p1 + p2 + p3 + p4\nquantized[n] = sat(acc[n] >>> 6)\n这些值在上升沿前稳定", 560, 200, 510, 230, "blue")
+    n_edge = p.card("第 n 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n]\nout_valid <= 1\nD1 <= D0；D2 <= 旧 D1\nD3 <= 旧 D2；D4 <= 旧 D3\n本沿输出和历史同时更新", 1155, 200, 540, 230, "blue")
+    p.edge(n_state, n_calc, color="#4C78A8")
+    p.edge(n_calc, n_edge, color="#4C78A8")
+
+    next_state = p.card("第 n+1 拍：开始状态", "in_valid = 1\nD0 = x[n+1]\nD1 = x[n]\nD2 = x[n−1]\nD3 = x[n−2]\nD4 = x[n−3]", 45, 485, 430, 230, "orange")
+    next_calc = p.card("第 n+1 拍：组合计算", "用新的 D0..D4\n执行相同的五路乘法、累加、\n算术右移和饱和\n得到 quantized[n+1]", 560, 485, 510, 230, "orange")
+    next_edge = p.card("第 n+1 拍：上升沿更新", "posedge clk：\ny_out <= quantized[n+1]\nout_valid <= 1\nD1..D4 再向历史方向推进一格\n持续有效时每拍接受一个样本", 1155, 485, 540, 230, "orange")
+    p.edge(next_state, next_calc, color="#D68A24")
+    p.edge(next_calc, next_edge, color="#D68A24")
+    p.card("气泡周期", "若某拍 in_valid=0：out_valid 拉低；D1..D4 与 y_out 保持；组合 acc 仍会随 x_in 变化。该拍不消费新样本，后续有效样本仍按有效样本顺序推进。", 45, 770, 795, 130, "gray")
+    p.card("异步复位 / 延迟与吞吐", "rst_n 拉低时立即清零 D1..D4、y_out、out_valid。有效样本在其采样上升沿后得到对应输出，持续有效时吞吐为每拍一个样本；没有额外的 MAC 流水等待。", 885, 770, 810, 130, "red")
     return p
 
 
