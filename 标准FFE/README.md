@@ -14,6 +14,17 @@ yosys -Q -T -p 'read_verilog -sv rtl/ffe.sv; synth -top ffe; stat' > build/yosys
 
 如果你先想看原理，请从[FFE 原理说明和架构图](docs/ffe_principle.md)开始。
 
+## 架构图（draw.io）
+
+下面四张图来自同一个可编辑的 [draw.io 多页文件](docs/ffe_design.drawio)，图中的模块和关系对照了当前 Python 与 RTL 源码：
+
+1. [RTL 总体数据通路](docs/ffe_architecture.svg)：五抽头延迟线、乘积汇集、累加、定点缩放、饱和与输出寄存器。
+2. [RTL 每拍处理顺序](docs/rtl_cycle.svg)：沿前组合计算、有效沿更新、气泡保持及异步复位。
+3. [Python 函数职责](docs/python_functions.svg)：列出模型、回归编排和教学信道脚本中的主要函数及职责。
+4. [软硬件整体系统图](docs/system_overview.svg)：展示参考模型怎样生成向量、testbench 怎样驱动 RTL、如何逐拍比对并导出波形。
+
+可用 `python3 scripts/create_diagrams.py` 重建这些图；该命令使用 draw.io 桌面版命令行从多页源文件导出 SVG。
+
 ![Python 与 RTL 波形对照](build/wave.svg)
 
 ## FFE 的含义
